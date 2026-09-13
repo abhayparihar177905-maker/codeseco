@@ -1,17 +1,20 @@
 'use client'
 
 import { AnimatePresence, motion } from 'motion/react'
-import { Gavel, Sparkles, X } from 'lucide-react'
+import { Gavel, Siren, Sparkles, X } from 'lucide-react'
 import type { Pack, PackId } from '@/lib/types'
 import { PackIcon } from './pack-icon'
 import { cn } from '@/lib/utils'
 
+type View = 'game' | 'admin' | 'reflex'
+
 interface SidebarProps {
   packs: Pack[]
   activePackId: PackId
-  view: 'game' | 'admin'
+  view: View
   onSelectPack: (id: PackId) => void
   onOpenAdmin: () => void
+  onOpenReflex: () => void
 }
 
 function Brand() {

@@ -37,3 +37,35 @@ export interface Pack {
   gradient: [string, string]
   cards: RightCard[]
 }
+
+/* ---------- Hazard Reflex live simulation ---------- */
+
+export type ReflexTone = 'harsh' | 'medium' | 'lawful'
+
+export interface ReflexPreset {
+  tone: ReflexTone
+  label: string
+  text: string
+}
+
+export interface ReflexScenario {
+  id: string
+  title: string
+  /** short status tag, e.g. "POLICE STOP" */
+  tag: string
+  prompt: string
+  presets: ReflexPreset[]
+}
+
+export type ReflexVerdict = 'CRITICAL' | 'TRAP' | 'SHIELD'
+
+export interface ReflexReport {
+  verdictType: ReflexVerdict
+  verdictTitle: string
+  /** 0-100 legal liability/risk score */
+  liabilityScore: number
+  whatWentWrong: string[]
+  whatYouShouldDo: string[]
+  exactWordsToSay: string
+  applicableLaw: string
+}
