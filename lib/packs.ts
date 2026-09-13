@@ -1,0 +1,213 @@
+import type { Pack } from './types'
+
+export const PACKS: Pack[] = [
+  {
+    id: 'traffic',
+    name: 'Traffic & Roadside Check',
+    tagline: 'Cops, challans & checkpoints',
+    icon: 'TrafficCone',
+    gradient: ['#f59e0b', '#b45309'],
+    cards: [
+      {
+        id: 'traffic-1',
+        scenario: 'A traffic cop forcibly snatches your bike keys to stop you from leaving.',
+        verdict: 'illegal',
+        law: 'Section 130 & 183, Motor Vehicles Act, 1988',
+        rule: 'An officer cannot pull out or grab your keys. Point this out, stay calm, and ask for a digital challan receipt with the officer’s name and badge number.',
+      },
+      {
+        id: 'traffic-2',
+        scenario:
+          'You get fined for not carrying the physical Driving Licence even after showing a valid DigiLocker / mParivahan copy.',
+        verdict: 'illegal',
+        law: 'IT Act, 2000 + MoRTH Advisory (Rule 139, CMV Rules)',
+        rule: 'Documents shown via DigiLocker or mParivahan are legally valid. Show the app copy and refuse to pay a fine raised only for a missing physical card.',
+      },
+      {
+        id: 'traffic-3',
+        scenario:
+          'Only an officer of Assistant Sub-Inspector rank or above books you and issues the challan.',
+        verdict: 'legal',
+        law: 'Section 132, Motor Vehicles Act + State Traffic Rules',
+        rule: 'Traffic constables can assist, but the fine must be issued by an ASI-rank officer or above. Confirm the officer’s rank if you are unsure.',
+      },
+      {
+        id: 'traffic-4',
+        scenario:
+          'At a night checkpoint, the cop demands cash on the spot to "settle" the challan quietly.',
+        verdict: 'illegal',
+        law: 'Prevention of Corruption Act, 1988',
+        rule: 'On-the-spot cash "settlements" are bribes, not fines. Insist on a proper e-challan receipt or an official challan against your vehicle number.',
+      },
+      {
+        id: 'traffic-5',
+        scenario: 'You are fined ₹2,000 for driving without a valid third-party insurance policy.',
+        verdict: 'legal',
+        law: 'Section 196, Motor Vehicles Act, 1988',
+        rule: 'Driving without valid insurance is a real offence with a genuine fine. Keep your policy handy digitally so you can prove cover instantly.',
+      },
+      {
+        id: 'traffic-6',
+        scenario: 'A cop scrolls through the messages on your phone during a routine traffic stop.',
+        verdict: 'illegal',
+        law: 'Right to Privacy, Article 21 (Puttaswamy, 2017)',
+        rule: 'There is no traffic law that lets an officer search your phone without a warrant. Politely decline and ask under what provision they are searching it.',
+      },
+    ],
+  },
+  {
+    id: 'tenant',
+    name: 'Tenant & Landlord',
+    tagline: 'Deposits, entry & eviction',
+    icon: 'KeyRound',
+    gradient: ['#22d3ee', '#0e7490'],
+    cards: [
+      {
+        id: 'tenant-1',
+        scenario: 'Your landlord lets themselves into your rented flat while you are at work, without notice.',
+        verdict: 'illegal',
+        law: 'Section 23, Model Tenancy Act, 2021',
+        rule: 'A landlord must give at least 24 hours’ written notice before entering. You have a right to peaceful, private possession of the home you rent.',
+      },
+      {
+        id: 'tenant-2',
+        scenario: 'Your landlord demands 10 months’ rent upfront as the security deposit for a home.',
+        verdict: 'illegal',
+        law: 'Section 11, Model Tenancy Act, 2021',
+        rule: 'Residential security deposits are capped at two months’ rent. Ask for the cap in writing and refuse to overpay beyond it.',
+      },
+      {
+        id: 'tenant-3',
+        scenario: 'To force you out, the landlord cuts off the water and electricity supply.',
+        verdict: 'illegal',
+        law: 'Section 20, Model Tenancy Act, 2021',
+        rule: 'A landlord cannot withhold essential supplies like water or power. Report it to the Rent Authority — even during a dispute they must stay connected.',
+      },
+      {
+        id: 'tenant-4',
+        scenario: 'The landlord doubles your rent mid-lease, ignoring the notice terms in the agreement.',
+        verdict: 'illegal',
+        law: 'Section 9, Model Tenancy Act, 2021',
+        rule: 'Rent can only be revised as per the agreement and with proper written notice. A sudden mid-lease hike outside those terms is not enforceable.',
+      },
+      {
+        id: 'tenant-5',
+        scenario: 'Your tenancy is backed by a written agreement registered with the Rent Authority.',
+        verdict: 'legal',
+        law: 'Section 4, Model Tenancy Act, 2021',
+        rule: 'A written, registered agreement is exactly what the law wants. It protects both sides and is your strongest proof in any dispute.',
+      },
+      {
+        id: 'tenant-6',
+        scenario: 'On move-out, the landlord keeps your entire deposit for ordinary wear and tear.',
+        verdict: 'illegal',
+        law: 'Section 11, Model Tenancy Act, 2021',
+        rule: 'Deductions are only for actual damage, not normal wear and tear. Ask for an itemised list of deductions before any amount is withheld.',
+      },
+    ],
+  },
+  {
+    id: 'consumer',
+    name: 'Consumer Disputes',
+    tagline: 'Bills, refunds & MRP',
+    icon: 'ShoppingCart',
+    gradient: ['#a78bfa', '#6d28d9'],
+    cards: [
+      {
+        id: 'consumer-1',
+        scenario: 'A restaurant adds a "service charge" to your bill and refuses to remove it.',
+        verdict: 'illegal',
+        law: 'CCPA Guidelines, 2022 (Consumer Protection Act, 2019)',
+        rule: 'Service charge is voluntary, never mandatory. Ask them to remove it — you can pay it only if you genuinely wish to tip.',
+      },
+      {
+        id: 'consumer-2',
+        scenario: 'A shop refuses any refund or replacement for a product that broke within warranty.',
+        verdict: 'illegal',
+        law: 'Consumer Protection Act, 2019',
+        rule: 'A defect within warranty entitles you to repair, replacement or refund. Keep the bill and file on the National Consumer Helpline (1915) if refused.',
+      },
+      {
+        id: 'consumer-3',
+        scenario: 'An online seller charges you more than the printed MRP on a packaged product.',
+        verdict: 'illegal',
+        law: 'Section 36, Legal Metrology Act, 2009',
+        rule: 'No seller can charge above the MRP printed on the pack. Screenshot the listing and the MRP, then demand a refund of the difference.',
+      },
+      {
+        id: 'consumer-4',
+        scenario: 'A movie theatre stops you from carrying your own bottle of drinking water inside.',
+        verdict: 'illegal',
+        law: 'Consumer Protection Act, 2019 (unfair trade practice)',
+        rule: 'Multiple courts have held you can carry your own drinking water into cinemas. Free potable water must also be made available.',
+      },
+      {
+        id: 'consumer-5',
+        scenario: 'You file a consumer complaint yourself online through the e-Daakhil portal.',
+        verdict: 'legal',
+        law: 'Consumer Protection Act, 2019 (e-Daakhil)',
+        rule: 'You can file a complaint online without hiring a lawyer. Small claims are cheap to file and can be pursued from home.',
+      },
+      {
+        id: 'consumer-6',
+        scenario: 'A brand voids your warranty only because you did not register the product online.',
+        verdict: 'illegal',
+        law: 'Consumer Protection Act, 2019',
+        rule: 'Warranty starts from the date of purchase, shown by your invoice. Online registration is optional convenience, not a condition for warranty.',
+      },
+    ],
+  },
+  {
+    id: 'arrest',
+    name: 'Arrest & Police Rights',
+    tagline: 'Detention, FIRs & custody',
+    icon: 'Shield',
+    gradient: ['#fb7185', '#9f1239'],
+    cards: [
+      {
+        id: 'arrest-1',
+        scenario: 'Police arrest a woman between 6 PM and 6 AM without a magistrate’s special permission.',
+        verdict: 'illegal',
+        law: 'Section 46(4) CrPC / Section 43(5) BNSS',
+        rule: 'A woman generally cannot be arrested after sunset and before sunrise without prior magistrate approval. Any arrest must also be made by a woman officer.',
+      },
+      {
+        id: 'arrest-2',
+        scenario: 'On arrest, you are clearly told the exact grounds and reasons for your arrest.',
+        verdict: 'legal',
+        law: 'Article 22(1), Constitution + Section 50 CrPC',
+        rule: 'You have a fundamental right to know why you are being arrested. This is the police doing it correctly — note down what you are told.',
+      },
+      {
+        id: 'arrest-3',
+        scenario: 'Police keep you in custody for 36 hours without producing you before a magistrate.',
+        verdict: 'illegal',
+        law: 'Article 22(2), Constitution + Section 57 CrPC',
+        rule: 'You must be produced before a magistrate within 24 hours of arrest, travel time excluded. Beyond that, the detention becomes illegal.',
+      },
+      {
+        id: 'arrest-4',
+        scenario: 'You are allowed to consult and be defended by a lawyer of your own choice.',
+        verdict: 'legal',
+        law: 'Article 22(1), Constitution',
+        rule: 'The right to a lawyer of your choice is guaranteed from the moment of arrest. If you cannot afford one, you can ask for free legal aid.',
+      },
+      {
+        id: 'arrest-5',
+        scenario: 'A police station refuses your FIR because the crime happened in another station’s area.',
+        verdict: 'illegal',
+        law: 'Section 154 CrPC / Zero FIR (Section 173 BNSS)',
+        rule: 'Any police station must register a "Zero FIR" regardless of jurisdiction and transfer it later. Refusal to register a cognizable offence is punishable.',
+      },
+      {
+        id: 'arrest-6',
+        scenario: 'Police handcuff an arrested person by default, for an ordinary non-violent offence.',
+        verdict: 'illegal',
+        law: 'Prem Shankar Shukla v. Delhi Admin (Supreme Court)',
+        rule: 'Handcuffing is allowed only in rare, justified cases, not as a routine. Officers must record specific reasons before restraining you.',
+      },
+    ],
+  },
+]
+
+export const PACK_MAP = Object.fromEntries(PACKS.map((p) => [p.id, p]))
