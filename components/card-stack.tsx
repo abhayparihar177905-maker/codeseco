@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Check, Loader2, Sparkles, X } from 'lucide-react'
 import type { Pack, RightCard, Verdict } from '@/lib/types'
-import { SwipeCard } from './swipe-card'
+import { SwipeCard, scenarioSrc } from './swipe-card'
 
 interface CardStackProps {
   pack: Pack
@@ -23,11 +23,31 @@ export function CardStack({ pack, onAnswer }: CardStackProps) {
   const [flash, setFlash] = useState<{ id: number; correct: boolean } | null>(null)
   const [fetching, setFetching] = useState(false)
   const [waiting, setWaiting] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
 
   const fetchingRef = useRef(false)
   const seenIds = useRef(new Set(pack.cards.slice(0, 3).map((c) => c.id)))
+  const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const card = deck[index]
+
+  const flashNotice = useCallback((msg: string) => {
+    setNotice(msg)
+    if (noticeTimer.current) clearTimeout(noticeTimer.current)
+    noticeTimer.current = setTimeout(() => setNotice(null), 3500)
+  }, [])
+
+  // Last-resort failover: reshuffle the pack's own cards with fresh ids so the deck never runs dry.
+  const recycle = useCallback(() => {
+    const shuffled = [...pack.cards]
+      .sort(() => Math.random() - 0.5)
+      .map((c) => ({
+        ...c,
+        id: `recycle-${c.id}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      }))
+    shuffled.forEach((c) => seenIds.current.add(c.id))
+    setDeck((d) => [...d, ...shuffled])
+  }, [pack.cards])
 
   const fetchMore = useCallback(async () => {
     if (fetchingRef.current) return
@@ -39,22 +59,35 @@ export function CardStack({ pack, onAnswer }: CardStackProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ category: pack.name }),
       })
-      const data = (await res.json()) as { cards?: RightCard[] }
+      const data = (await res.json()) as { cards?: RightCard[]; mode?: string }
       const fresh = (data.cards ?? []).filter((c) => !seenIds.current.has(c.id))
       fresh.forEach((c) => seenIds.current.add(c.id))
       if (fresh.length > 0) setDeck((d) => [...d, ...fresh])
+      else recycle()
+      if (data.mode === 'fallback') flashNotice('Live AI stream paused — serving curated cards.')
     } catch (err) {
       console.log('[v0] prefetch failed:', (err as Error)?.message)
+      recycle()
+      flashNotice('Offline — recycling curated cards.')
     } finally {
       fetchingRef.current = false
       setFetching(false)
     }
-  }, [pack.name])
+  }, [pack.name, recycle, flashNotice])
 
   // Kick off the first background batch as soon as the pack mounts.
   useEffect(() => {
     void fetchMore()
   }, [fetchMore])
+
+  // Warm the browser cache for the current + upcoming banners so they render instantly on swipe.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    deck.slice(index, index + 3).forEach((c) => {
+      const img = new window.Image()
+      img.src = scenarioSrc(c)
+    })
+  }, [deck, index])
 
   // If the player caught up to a still-loading batch, advance the moment it lands.
   useEffect(() => {
@@ -170,8 +203,8 @@ export function CardStack({ pack, onAnswer }: CardStackProps) {
                 card={card}
                 gradient={pack.gradient}
                 packName={pack.name}
+                icon={pack.icon}
                 index={index}
-                total={0}
                 answered={answered}
                 userVerdict={userVerdict}
                 onCommit={commit}
@@ -206,6 +239,21 @@ export function CardStack({ pack, onAnswer }: CardStackProps) {
         Swipe the card, tap a button, or use <span className="text-foreground">←</span> /{' '}
         <span className="text-foreground">→</span> keys
       </p>
+
+      {/* Subtle failover notice */}
+      <AnimatePresence>
+        {notice && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            className="fixed inset-x-0 bottom-5 z-50 mx-auto flex w-fit max-w-[90vw] items-center gap-2 rounded-full border border-white/10 bg-card/95 px-4 py-2 text-xs font-medium text-muted-foreground shadow-xl backdrop-blur"
+          >
+            <Sparkles className="size-3.5 shrink-0 text-primary" />
+            {notice}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

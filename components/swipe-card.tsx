@@ -1,41 +1,65 @@
 'use client'
 
 import { animate, motion, useMotionValue, useTransform } from 'motion/react'
-import { useState } from 'react'
-import { Check, ImageOff, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Check, X } from 'lucide-react'
 import type { RightCard, Verdict } from '@/lib/types'
+import { PackIcon } from './pack-icon'
 
-function ScenarioImage({ card }: { card: RightCard }) {
-  const [loaded, setLoaded] = useState(false)
-  const [error, setError] = useState(false)
+/** Build the scenario banner image URL. Exported so the deck can preload upcoming cards. */
+export function scenarioSrc(card: RightCard) {
   const keyword = card.imageKeyword || card.scenario
-  const src = `https://image.pollinations.ai/prompt/${encodeURIComponent(
-    keyword + ' dramatic cinematic editorial illustration',
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(
+    keyword + ' dramatic cinematic editorial photography high contrast',
   )}?width=600&height=350&nologo=true`
+}
+
+function ScenarioImage({
+  card,
+  gradient,
+  icon,
+}: {
+  card: RightCard
+  gradient: [string, string]
+  icon: string
+}) {
+  const [loaded, setLoaded] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const src = scenarioSrc(card)
+
+  // Never let a slow or broken remote image stall a swipe: drop to the gradient after 2s.
+  useEffect(() => {
+    if (loaded || failed) return
+    const timer = setTimeout(() => setFailed(true), 2000)
+    return () => clearTimeout(timer)
+  }, [loaded, failed])
+
+  if (failed) {
+    return (
+      <div
+        className="relative flex h-full w-full items-center justify-center overflow-hidden"
+        style={{ backgroundImage: `linear-gradient(150deg, ${gradient[0]}, ${gradient[1]} 65%, #0f1014 130%)` }}
+      >
+        <div className="pointer-events-none absolute inset-0 opacity-20 mix-blend-overlay [background-image:repeating-linear-gradient(135deg,#000_0_2px,transparent_2px_16px)]" />
+        <PackIcon name={icon} className="relative size-16 text-black/35" strokeWidth={1.5} />
+      </div>
+    )
+  }
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-black/30">
-      {!loaded && !error && (
-        <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-white/10 to-black/20" />
-      )}
-      {error ? (
-        <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-white/50">
-          <ImageOff className="size-7" />
-          <span className="text-xs font-medium">Scene unavailable</span>
-        </div>
-      ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          key={src}
-          src={src || '/placeholder.svg'}
-          alt={card.imageKeyword ? `Illustration: ${card.imageKeyword}` : 'Scenario illustration'}
-          className="h-full w-full object-cover transition-opacity duration-500"
-          style={{ opacity: loaded ? 1 : 0 }}
-          onLoad={() => setLoaded(true)}
-          onError={() => setError(true)}
-          draggable={false}
-        />
-      )}
+      {!loaded && <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-white/10 to-black/20" />}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        key={src}
+        src={src || '/placeholder.svg'}
+        alt={card.imageKeyword ? `Illustration: ${card.imageKeyword}` : 'Scenario illustration'}
+        className="h-full w-full object-cover transition-opacity duration-500"
+        style={{ opacity: loaded ? 1 : 0 }}
+        onLoad={() => setLoaded(true)}
+        onError={() => setFailed(true)}
+        draggable={false}
+      />
       {/* legibility gradient into the card body */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/45 to-transparent" />
     </div>
@@ -46,8 +70,8 @@ interface SwipeCardProps {
   card: RightCard
   gradient: [string, string]
   packName: string
+  icon: string
   index: number
-  total: number
   answered: boolean
   userVerdict: Verdict | null
   onCommit: (verdict: Verdict) => void
@@ -60,8 +84,8 @@ export function SwipeCard({
   card,
   gradient,
   packName,
+  icon,
   index,
-  total,
   answered,
   userVerdict,
   onCommit,
@@ -111,13 +135,13 @@ export function SwipeCard({
           >
             {/* TOP HALF — scenario banner image */}
             <div className="relative h-[46%] shrink-0 overflow-hidden">
-              <ScenarioImage card={card} />
+              <ScenarioImage card={card} gradient={gradient} icon={icon} />
               <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
                 <span className="rounded-full bg-black/45 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-white/90 backdrop-blur-sm">
                   {card.category || packName}
                 </span>
-                <span className="rounded-full bg-black/45 px-3 py-1 text-xs font-bold text-white/90 backdrop-blur-sm">
-                  {String(index + 1).padStart(2, '0')} / {total > 0 ? String(total).padStart(2, '0') : '∞'}
+                <span className="rounded-full bg-black/45 px-3 py-1 text-xs font-bold uppercase tracking-widest text-white/90 backdrop-blur-sm">
+                  Card #{index + 1}
                 </span>
               </div>
             </div>
@@ -194,7 +218,7 @@ export function SwipeCard({
               onClick={onNext}
               className="mt-4 w-full rounded-xl bg-primary py-3.5 font-display text-xl uppercase tracking-wide text-primary-foreground transition-transform active:scale-[0.98]"
             >
-              {total > 0 && index + 1 >= total ? 'See your score' : 'Next card'}
+              Next card
             </button>
           </div>
         </motion.div>

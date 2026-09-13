@@ -57,9 +57,7 @@ function SidebarBody({ packs, activePackId, view, onSelectPack, onOpenAdmin }: S
               </span>
               <span className="flex min-w-0 flex-col">
                 <span className="truncate text-sm font-semibold text-foreground">{pack.name}</span>
-                <span className="truncate text-xs text-muted-foreground">
-                  {pack.cards.length} {pack.cards.length === 1 ? 'card' : 'cards'}
-                </span>
+                <span className="truncate text-xs text-muted-foreground">{pack.tagline}</span>
               </span>
             </button>
           )
