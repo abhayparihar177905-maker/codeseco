@@ -1,26 +1,70 @@
 'use client'
 
 import { AnimatePresence, motion } from 'motion/react'
-import { useCallback, useEffect, useState } from 'react'
-import { Check, X } from 'lucide-react'
-import type { Pack, Verdict } from '@/lib/types'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Check, Loader2, Sparkles, X } from 'lucide-react'
+import type { Pack, RightCard, Verdict } from '@/lib/types'
 import { SwipeCard } from './swipe-card'
 
 interface CardStackProps {
   pack: Pack
   onAnswer: (correct: boolean) => void
-  onComplete: (result: { correct: number; total: number }) => void
 }
 
-export function CardStack({ pack, onAnswer, onComplete }: CardStackProps) {
+/** How many cards must remain ahead before we quietly fetch the next batch. */
+const PREFETCH_THRESHOLD = 2
+
+export function CardStack({ pack, onAnswer }: CardStackProps) {
+  // Start with up to 3 pre-cached cards for zero initial delay.
+  const [deck, setDeck] = useState<RightCard[]>(() => pack.cards.slice(0, 3))
   const [index, setIndex] = useState(0)
   const [answered, setAnswered] = useState(false)
   const [userVerdict, setUserVerdict] = useState<Verdict | null>(null)
-  const [correctCount, setCorrectCount] = useState(0)
   const [flash, setFlash] = useState<{ id: number; correct: boolean } | null>(null)
+  const [fetching, setFetching] = useState(false)
+  const [waiting, setWaiting] = useState(false)
 
-  const total = pack.cards.length
-  const card = pack.cards[index]
+  const fetchingRef = useRef(false)
+  const seenIds = useRef(new Set(pack.cards.slice(0, 3).map((c) => c.id)))
+
+  const card = deck[index]
+
+  const fetchMore = useCallback(async () => {
+    if (fetchingRef.current) return
+    fetchingRef.current = true
+    setFetching(true)
+    try {
+      const res = await fetch('/api/generate-cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category: pack.name }),
+      })
+      const data = (await res.json()) as { cards?: RightCard[] }
+      const fresh = (data.cards ?? []).filter((c) => !seenIds.current.has(c.id))
+      fresh.forEach((c) => seenIds.current.add(c.id))
+      if (fresh.length > 0) setDeck((d) => [...d, ...fresh])
+    } catch (err) {
+      console.log('[v0] prefetch failed:', (err as Error)?.message)
+    } finally {
+      fetchingRef.current = false
+      setFetching(false)
+    }
+  }, [pack.name])
+
+  // Kick off the first background batch as soon as the pack mounts.
+  useEffect(() => {
+    void fetchMore()
+  }, [fetchMore])
+
+  // If the player caught up to a still-loading batch, advance the moment it lands.
+  useEffect(() => {
+    if (waiting && index + 1 < deck.length) {
+      setIndex((i) => i + 1)
+      setAnswered(false)
+      setUserVerdict(null)
+      setWaiting(false)
+    }
+  }, [deck.length, waiting, index])
 
   const commit = useCallback(
     (verdict: Verdict) => {
@@ -29,21 +73,25 @@ export function CardStack({ pack, onAnswer, onComplete }: CardStackProps) {
       setUserVerdict(verdict)
       setAnswered(true)
       setFlash({ id: Date.now(), correct: isCorrect })
-      if (isCorrect) setCorrectCount((c) => c + 1)
       onAnswer(isCorrect)
     },
     [answered, card, onAnswer],
   )
 
   const next = useCallback(() => {
-    if (index + 1 >= total) {
-      onComplete({ correct: correctCount, total })
-      return
+    const target = index + 1
+    // Prefetch well before the deck runs dry.
+    if (deck.length - target <= PREFETCH_THRESHOLD) void fetchMore()
+
+    if (target < deck.length) {
+      setIndex(target)
+      setAnswered(false)
+      setUserVerdict(null)
+    } else {
+      // Batch not here yet — show the loader and advance via the effect above.
+      setWaiting(true)
     }
-    setIndex((i) => i + 1)
-    setAnswered(false)
-    setUserVerdict(null)
-  }, [index, total, correctCount, onComplete])
+  }, [index, deck.length, fetchMore])
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -63,7 +111,7 @@ export function CardStack({ pack, onAnswer, onComplete }: CardStackProps) {
       {/* Card area */}
       <div className="relative mx-auto aspect-[3/4.15] w-full max-w-sm">
         {/* peek cards behind */}
-        {pack.cards.slice(index + 1, index + 3).map((c, i) => (
+        {deck.slice(index + 1, index + 3).map((c, i) => (
           <div
             key={c.id}
             aria-hidden
@@ -75,6 +123,16 @@ export function CardStack({ pack, onAnswer, onComplete }: CardStackProps) {
             }}
           />
         ))}
+
+        {/* waiting-for-AI loader (only if the player outran the fetch) */}
+        {waiting && (
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 rounded-3xl border border-white/10 bg-card">
+            <Loader2 className="size-8 animate-spin text-primary" />
+            <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+              <Sparkles className="size-4 text-primary" /> AI generating next batch…
+            </p>
+          </div>
+        )}
 
         {/* colored feedback flash */}
         <AnimatePresence>
@@ -99,26 +157,28 @@ export function CardStack({ pack, onAnswer, onComplete }: CardStackProps) {
         </AnimatePresence>
 
         <AnimatePresence mode="popLayout">
-          <motion.div
-            key={card.id}
-            className="absolute inset-0 z-10"
-            initial={{ opacity: 0, scale: 0.9, y: 24 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.85, y: -40 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 30 }}
-          >
-            <SwipeCard
-              card={card}
-              gradient={pack.gradient}
-              packName={pack.name}
-              index={index}
-              total={total}
-              answered={answered}
-              userVerdict={userVerdict}
-              onCommit={commit}
-              onNext={next}
-            />
-          </motion.div>
+          {card && (
+            <motion.div
+              key={card.id}
+              className="absolute inset-0 z-10"
+              initial={{ opacity: 0, scale: 0.9, y: 24 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.85, y: -40 }}
+              transition={{ type: 'spring', stiffness: 320, damping: 30 }}
+            >
+              <SwipeCard
+                card={card}
+                gradient={pack.gradient}
+                packName={pack.name}
+                index={index}
+                total={0}
+                answered={answered}
+                userVerdict={userVerdict}
+                onCommit={commit}
+                onNext={next}
+              />
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 
@@ -126,7 +186,7 @@ export function CardStack({ pack, onAnswer, onComplete }: CardStackProps) {
       <div className="flex w-full max-w-sm items-stretch gap-4">
         <button
           type="button"
-          disabled={answered}
+          disabled={answered || !card}
           onClick={() => commit('illegal')}
           className="group flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-illegal/60 bg-illegal/10 py-4 font-display text-2xl uppercase tracking-wide text-illegal transition-all active:scale-95 disabled:opacity-30"
         >
@@ -134,14 +194,15 @@ export function CardStack({ pack, onAnswer, onComplete }: CardStackProps) {
         </button>
         <button
           type="button"
-          disabled={answered}
+          disabled={answered || !card}
           onClick={() => commit('legal')}
           className="group flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-legal/60 bg-legal/10 py-4 font-display text-2xl uppercase tracking-wide text-legal transition-all active:scale-95 disabled:opacity-30"
         >
           <Check className="size-6" strokeWidth={3} /> Legal
         </button>
       </div>
-      <p className="text-center text-xs text-muted-foreground">
+      <p className="flex items-center gap-2 text-center text-xs text-muted-foreground">
+        {fetching && <Loader2 className="size-3 animate-spin text-primary" />}
         Swipe the card, tap a button, or use <span className="text-foreground">←</span> /{' '}
         <span className="text-foreground">→</span> keys
       </p>

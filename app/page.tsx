@@ -8,7 +8,6 @@ import { AppSidebar, MobileDrawer } from '@/components/app-sidebar'
 import { PackSelector } from '@/components/pack-selector'
 import { ScoreTracker, type Stats } from '@/components/score-tracker'
 import { CardStack } from '@/components/card-stack'
-import { ScoreSummary } from '@/components/score-summary'
 import { AdminPanel } from '@/components/admin-panel'
 
 export default function Page() {
@@ -16,7 +15,6 @@ export default function Page() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [activePackId, setActivePackId] = useState<PackId>('traffic')
   const [attempt, setAttempt] = useState(0)
-  const [summary, setSummary] = useState<{ correct: number; total: number } | null>(null)
   const [ingested, setIngested] = useState<RightCard[]>([])
   const [stats, setStats] = useState<Stats>({ correct: 0, answered: 0, streak: 0, best: 0 })
 
@@ -38,7 +36,6 @@ export default function Page() {
   function selectPack(id: PackId) {
     setActivePackId(id)
     setView('game')
-    setSummary(null)
     setAttempt((a) => a + 1)
   }
 
@@ -54,15 +51,6 @@ export default function Page() {
     })
   }
 
-  function nextPack() {
-    const idx = packs.findIndex((p) => p.id === activePack.id)
-    const next = packs[(idx + 1) % packs.length]
-    selectPack(next.id)
-  }
-
-  const currentIdx = packs.findIndex((p) => p.id === activePack.id)
-  const hasNextPack = packs.length > 1 && currentIdx < packs.length - 1
-
   const sidebarProps = {
     packs,
     activePackId,
@@ -70,7 +58,6 @@ export default function Page() {
     onSelectPack: selectPack,
     onOpenAdmin: () => {
       setView('admin')
-      setSummary(null)
     },
   }
 
@@ -117,27 +104,9 @@ export default function Page() {
         <main className="no-scrollbar flex-1 overflow-y-auto px-4 py-6">
           {view === 'admin' ? (
             <AdminPanel onAddCards={setIngestedAndFocus} />
-          ) : summary ? (
-            <div className="flex min-h-full items-center justify-center">
-              <ScoreSummary
-                pack={activePack}
-                result={summary}
-                hasNextPack={hasNextPack}
-                onReplay={() => {
-                  setSummary(null)
-                  setAttempt((a) => a + 1)
-                }}
-                onNextPack={nextPack}
-              />
-            </div>
           ) : (
             <div className="flex min-h-full flex-col items-center justify-center">
-              <CardStack
-                key={`${activePack.id}-${attempt}`}
-                pack={activePack}
-                onAnswer={handleAnswer}
-                onComplete={setSummary}
-              />
+              <CardStack key={`${activePack.id}-${attempt}`} pack={activePack} onAnswer={handleAnswer} />
             </div>
           )}
         </main>

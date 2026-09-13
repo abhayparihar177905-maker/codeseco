@@ -1,8 +1,46 @@
 'use client'
 
 import { animate, motion, useMotionValue, useTransform } from 'motion/react'
-import { Check, X } from 'lucide-react'
+import { useState } from 'react'
+import { Check, ImageOff, X } from 'lucide-react'
 import type { RightCard, Verdict } from '@/lib/types'
+
+function ScenarioImage({ card }: { card: RightCard }) {
+  const [loaded, setLoaded] = useState(false)
+  const [error, setError] = useState(false)
+  const keyword = card.imageKeyword || card.scenario
+  const src = `https://image.pollinations.ai/prompt/${encodeURIComponent(
+    keyword + ' dramatic cinematic editorial illustration',
+  )}?width=600&height=350&nologo=true`
+
+  return (
+    <div className="relative h-full w-full overflow-hidden bg-black/30">
+      {!loaded && !error && (
+        <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-white/10 to-black/20" />
+      )}
+      {error ? (
+        <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-white/50">
+          <ImageOff className="size-7" />
+          <span className="text-xs font-medium">Scene unavailable</span>
+        </div>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={src}
+          src={src || '/placeholder.svg'}
+          alt={card.imageKeyword ? `Illustration: ${card.imageKeyword}` : 'Scenario illustration'}
+          className="h-full w-full object-cover transition-opacity duration-500"
+          style={{ opacity: loaded ? 1 : 0 }}
+          onLoad={() => setLoaded(true)}
+          onError={() => setError(true)}
+          draggable={false}
+        />
+      )}
+      {/* legibility gradient into the card body */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/45 to-transparent" />
+    </div>
+  )
+}
 
 interface SwipeCardProps {
   card: RightCard
@@ -66,39 +104,46 @@ export function SwipeCard({
         >
           {/* FRONT */}
           <div
-            className="absolute inset-0 flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 p-6 shadow-2xl [backface-visibility:hidden]"
+            className="absolute inset-0 flex flex-col overflow-hidden rounded-3xl border border-white/10 shadow-2xl [backface-visibility:hidden]"
             style={{
               backgroundImage: `linear-gradient(155deg, ${gradient[0]} 0%, ${gradient[1]} 60%, #0f1014 140%)`,
             }}
           >
-            <div className="pointer-events-none absolute inset-0 opacity-25 mix-blend-overlay [background-image:repeating-linear-gradient(135deg,#000_0_2px,transparent_2px_16px)]" />
-
-            <div className="relative flex items-center justify-between">
-              <span className="rounded-full bg-black/35 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-white/90">
-                {packName}
-              </span>
-              <span className="rounded-full bg-black/35 px-3 py-1 text-xs font-bold text-white/90">
-                {String(index + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
-              </span>
+            {/* TOP HALF — scenario banner image */}
+            <div className="relative h-[46%] shrink-0 overflow-hidden">
+              <ScenarioImage card={card} />
+              <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
+                <span className="rounded-full bg-black/45 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-white/90 backdrop-blur-sm">
+                  {card.category || packName}
+                </span>
+                <span className="rounded-full bg-black/45 px-3 py-1 text-xs font-bold text-white/90 backdrop-blur-sm">
+                  {String(index + 1).padStart(2, '0')} / {total > 0 ? String(total).padStart(2, '0') : '∞'}
+                </span>
+              </div>
             </div>
 
-            <div className="relative">
-              <p className="text-xs font-bold uppercase tracking-[0.25em] text-black/60">
-                Scenario #{String(index + 1).padStart(2, '0')}
-              </p>
-              <h2 className="mt-3 text-balance font-display text-3xl leading-[1.05] text-black drop-shadow-sm sm:text-4xl">
-                {card.scenario}
-              </h2>
-            </div>
+            {/* BOTTOM HALF — scenario statement + instructions */}
+            <div className="relative flex flex-1 flex-col justify-between p-6">
+              <div className="pointer-events-none absolute inset-0 opacity-20 mix-blend-overlay [background-image:repeating-linear-gradient(135deg,#000_0_2px,transparent_2px_16px)]" />
 
-            <div className="relative flex items-center justify-between text-black/70">
-              <span className="flex items-center gap-1.5 text-sm font-bold uppercase">
-                <X className="size-4" strokeWidth={3} /> Illegal
-              </span>
-              <span className="text-xs font-medium text-black/50">Swipe or tap to judge</span>
-              <span className="flex items-center gap-1.5 text-sm font-bold uppercase">
-                Legal <Check className="size-4" strokeWidth={3} />
-              </span>
+              <div className="relative">
+                <p className="text-xs font-bold uppercase tracking-[0.25em] text-black/60">
+                  Scenario #{String(index + 1).padStart(2, '0')}
+                </p>
+                <h2 className="mt-2 text-balance font-display text-2xl leading-[1.05] text-black drop-shadow-sm sm:text-3xl">
+                  {card.scenario}
+                </h2>
+              </div>
+
+              <div className="relative flex items-center justify-between text-black/70">
+                <span className="flex items-center gap-1.5 text-sm font-bold uppercase">
+                  <X className="size-4" strokeWidth={3} /> Illegal
+                </span>
+                <span className="text-xs font-medium text-black/50">Swipe or tap to judge</span>
+                <span className="flex items-center gap-1.5 text-sm font-bold uppercase">
+                  Legal <Check className="size-4" strokeWidth={3} />
+                </span>
+              </div>
             </div>
 
             {/* Drag stamps */}
@@ -149,7 +194,7 @@ export function SwipeCard({
               onClick={onNext}
               className="mt-4 w-full rounded-xl bg-primary py-3.5 font-display text-xl uppercase tracking-wide text-primary-foreground transition-transform active:scale-[0.98]"
             >
-              {index + 1 >= total ? 'See your score' : 'Next card'}
+              {total > 0 && index + 1 >= total ? 'See your score' : 'Next card'}
             </button>
           </div>
         </motion.div>
