@@ -31,7 +31,7 @@ function Brand() {
   )
 }
 
-function SidebarBody({ packs, activePackId, view, onSelectPack, onOpenAdmin }: SidebarProps) {
+function SidebarBody({ packs, activePackId, view, onSelectPack, onOpenAdmin, onOpenReflex }: SidebarProps) {
   return (
     <div className="flex h-full flex-col gap-6 p-4">
       <Brand />
@@ -65,6 +65,30 @@ function SidebarBody({ packs, activePackId, view, onSelectPack, onOpenAdmin }: S
             </button>
           )
         })}
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <p className="px-3 py-2 text-[0.7rem] font-bold uppercase tracking-[0.2em] text-muted-foreground">Live Sim</p>
+        <button
+          type="button"
+          onClick={onOpenReflex}
+          className={cn(
+            'flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors',
+            view === 'reflex'
+              ? 'bg-red-500/15 text-red-300'
+              : 'text-muted-foreground hover:bg-sidebar-accent/50',
+          )}
+        >
+          <span className="relative flex size-9 shrink-0 items-center justify-center rounded-lg border border-red-500/40 bg-red-500/10">
+            <Siren className="size-4 text-red-400" strokeWidth={2.5} />
+            <span className="absolute -right-0.5 -top-0.5 size-2 animate-ping rounded-full bg-red-500" />
+            <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-red-500" />
+          </span>
+          <span className="flex flex-col">
+            <span className="text-sm font-semibold text-foreground">Hazard Reflex</span>
+            <span className="text-xs text-muted-foreground">Live crisis drill</span>
+          </span>
+        </button>
       </div>
 
       <div className="mt-auto flex flex-col gap-1">
@@ -139,6 +163,10 @@ export function MobileDrawer({
               }}
               onOpenAdmin={() => {
                 props.onOpenAdmin()
+                onClose()
+              }}
+              onOpenReflex={() => {
+                props.onOpenReflex()
                 onClose()
               }}
             />

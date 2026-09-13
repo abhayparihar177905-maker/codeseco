@@ -9,9 +9,12 @@ import { PackSelector } from '@/components/pack-selector'
 import { ScoreTracker, type Stats } from '@/components/score-tracker'
 import { CardStack } from '@/components/card-stack'
 import { AdminPanel } from '@/components/admin-panel'
+import { HazardReflex } from '@/components/hazard-reflex'
+
+type View = 'game' | 'admin' | 'reflex'
 
 export default function Page() {
-  const [view, setView] = useState<'game' | 'admin'>('game')
+  const [view, setView] = useState<View>('game')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [activePackId, setActivePackId] = useState<PackId>('traffic')
   const [attempt, setAttempt] = useState(0)
@@ -59,6 +62,9 @@ export default function Page() {
     onOpenAdmin: () => {
       setView('admin')
     },
+    onOpenReflex: () => {
+      setView('reflex')
+    },
   }
 
   return (
@@ -80,30 +86,38 @@ export default function Page() {
             </button>
             <div className="min-w-0">
               <p className="truncate font-display text-lg uppercase leading-none tracking-wide text-foreground">
-                {view === 'admin' ? 'AI Card Creator' : activePack.name}
+                {view === 'admin' ? 'AI Card Creator' : view === 'reflex' ? 'Hazard Reflex' : activePack.name}
               </p>
               <p className="truncate text-xs text-muted-foreground">
-                {view === 'admin' ? 'Turn news into swipe cards' : activePack.tagline}
+                {view === 'admin'
+                  ? 'Turn news into swipe cards'
+                  : view === 'reflex'
+                    ? 'Live crisis drill · Legal Autopsy'
+                    : activePack.tagline}
               </p>
             </div>
           </div>
           <ScoreTracker stats={stats} />
         </header>
 
-        {/* Pack selector row */}
-        <div className="border-b border-border px-4 py-3">
-          <PackSelector
-            packs={packs}
-            activePackId={activePackId}
-            isGame={view === 'game'}
-            onSelectPack={selectPack}
-          />
-        </div>
+        {/* Pack selector row — hidden during the live sim */}
+        {view !== 'reflex' && (
+          <div className="border-b border-border px-4 py-3">
+            <PackSelector
+              packs={packs}
+              activePackId={activePackId}
+              isGame={view === 'game'}
+              onSelectPack={selectPack}
+            />
+          </div>
+        )}
 
         {/* Main */}
         <main className="no-scrollbar flex-1 overflow-y-auto px-4 py-6">
           {view === 'admin' ? (
             <AdminPanel onAddCards={setIngestedAndFocus} />
+          ) : view === 'reflex' ? (
+            <HazardReflex onExit={() => setView('game')} />
           ) : (
             <div className="flex min-h-full flex-col items-center justify-center">
               <CardStack key={`${activePack.id}-${attempt}`} pack={activePack} onAnswer={handleAnswer} />
