@@ -20,6 +20,29 @@ export interface RightCard {
   generated?: boolean
 }
 
+/* ---------- AI Card Ingestor (condense + fact-check) ---------- */
+
+export type LegitimacyStatus = 'LEGITIMATE_LAW' | 'BUSTED_MYTH' | 'GRAY_AREA'
+
+export interface IngestedCard {
+  /** Ultra-condensed 10-15 word dramatic scenario statement. */
+  scenario: string
+  /** Word count of the scenario (enforced to 10-15). */
+  wordCount: number
+  /** Whether the described action is lawful/compliant. */
+  isLegal: boolean
+  /** Whether the claim is real law, a debunked myth, or a gray area. */
+  legitimacyStatus: LegitimacyStatus
+  /** Human-readable legitimacy tag, e.g. "Debunked Legal Myth". */
+  legitimacyLabel: string
+  /** The precise statute/section mapped to the scenario. */
+  mappedLaw: string
+  /** 1-2 sentence rule explaining the right and what to do. */
+  shortExplanation: string
+  /** Short category bucket, e.g. "Arrest & Police Rights". */
+  category: string
+}
+
 export type PackId =
   | 'traffic'
   | 'tenant'
