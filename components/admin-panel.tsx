@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from 'motion/react'
 import { useState } from 'react'
-import { ArrowRight, BadgeCheck, Check, Loader2, ScanSearch, ShieldAlert, ShieldQuestion, Sparkles, X, Zap } from 'lucide-react'
+import { ArrowRight, BadgeCheck, Check, Loader2, ScanSearch, ShieldAlert, X, Zap } from 'lucide-react'
 import type { IngestedCard, LegitimacyStatus, RightCard } from '@/lib/types'
 
 const SAMPLE = `NEW DELHI — A commuter has alleged that a traffic constable pulled the keys out of his scooter at a checkpoint near Connaught Place and demanded Rs 500 in cash to "settle" the matter without a challan. When the rider asked for a receipt, the officer refused and threatened to seize the vehicle. Legal experts point out that officers below Assistant Sub-Inspector rank cannot issue fines, that removing a vehicle's keys is not permitted, and that on-the-spot cash demands amount to bribery under the Prevention of Corruption Act.`
@@ -19,9 +19,9 @@ const STATUS_META: Record<
   LegitimacyStatus,
   { color: string; icon: typeof BadgeCheck }
 > = {
-  LEGITIMATE_LAW: { color: 'var(--legal)', icon: BadgeCheck },
+  VERIFIED_LAW: { color: 'var(--legal)', icon: BadgeCheck },
   BUSTED_MYTH: { color: 'var(--illegal)', icon: ShieldAlert },
-  GRAY_AREA: { color: 'var(--primary)', icon: ShieldQuestion },
+  CRIMINAL_VIOLATION: { color: 'var(--illegal)', icon: ShieldAlert },
 }
 
 function tint(color: string, pct: number) {
@@ -34,6 +34,7 @@ export function AdminPanel({ onAddCards }: { onAddCards: (cards: RightCard[]) =>
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<IngestResponse | null>(null)
   const [added, setAdded] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
 
   async function ingest() {
     setLoading(true)
@@ -73,11 +74,13 @@ export function AdminPanel({ onAddCards }: { onAddCards: (cards: RightCard[]) =>
     }
     onAddCards([card])
     setAdded(true)
+    setToast(`Card saved to "${c.category}" · now live in the swipe stack`)
+    window.setTimeout(() => setToast(null), 3200)
   }
 
   const card = result?.card
   const wordInRange = card ? card.wordCount >= 10 && card.wordCount <= 15 : false
-  const statusMeta = card ? STATUS_META[card.legitimacyStatus] : STATUS_META.GRAY_AREA
+  const statusMeta = card ? STATUS_META[card.legitimacyStatus] : STATUS_META.BUSTED_MYTH
 
   return (
     <div className="mx-auto w-full max-w-5xl">
@@ -173,7 +176,7 @@ export function AdminPanel({ onAddCards }: { onAddCards: (cards: RightCard[]) =>
                       }}
                     >
                       {card.isLegal ? <Check className="size-3" /> : <X className="size-3" />}
-                      {card.isLegal ? 'Legal' : 'Illegal'}
+                      {card.isLegal ? 'LEGAL' : 'ILLEGAL'}
                     </span>
                   </div>
 
@@ -189,7 +192,7 @@ export function AdminPanel({ onAddCards }: { onAddCards: (cards: RightCard[]) =>
                         backgroundColor: wordInRange ? tint('var(--legal)', 15) : tint('var(--illegal)', 15),
                       }}
                     >
-                      {card.wordCount} words
+                      [{card.wordCount} WORDS]
                     </span>
                     <span className="text-[0.7rem] text-muted-foreground">
                       {wordInRange ? 'within the 10–15 word target' : 'outside the 10–15 word target'}
@@ -240,14 +243,16 @@ export function AdminPanel({ onAddCards }: { onAddCards: (cards: RightCard[]) =>
                 Gemini request / response
               </p>
               <span
-                className="rounded-full px-2 py-0.5 text-[0.65rem] font-bold uppercase"
+                className="rounded-full px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide"
                 style={{
                   color: result.mode === 'live' ? 'var(--legal)' : 'var(--primary)',
                   backgroundColor:
                     result.mode === 'live' ? tint('var(--legal)', 15) : tint('var(--primary)', 15),
                 }}
               >
-                {result.mode}
+                {result.mode === 'live'
+                  ? 'LIVE GEMINI API // 2.5 FLASH CONNECTED'
+                  : 'OFFLINE FALLBACK // ADD GEMINI_API_KEY'}
               </span>
               <span className="text-[0.7rem] text-muted-foreground">{result.latencyMs} ms</span>
             </div>
@@ -266,6 +271,25 @@ export function AdminPanel({ onAddCards }: { onAddCards: (cards: RightCard[]) =>
                 </pre>
               </div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Save confirmation toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 24, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 24, scale: 0.96 }}
+            className="fixed inset-x-0 bottom-6 z-50 mx-auto flex w-fit max-w-[90vw] items-center gap-2.5 rounded-full border border-legal/40 bg-card px-4 py-2.5 shadow-lg"
+            role="status"
+            aria-live="polite"
+          >
+            <span className="flex size-6 items-center justify-center rounded-full bg-legal/15">
+              <Check className="size-3.5 text-legal" strokeWidth={3} />
+            </span>
+            <span className="text-sm font-medium text-foreground">{toast}</span>
           </motion.div>
         )}
       </AnimatePresence>

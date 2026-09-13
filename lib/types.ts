@@ -22,7 +22,7 @@ export interface RightCard {
 
 /* ---------- AI Card Ingestor (condense + fact-check) ---------- */
 
-export type LegitimacyStatus = 'LEGITIMATE_LAW' | 'BUSTED_MYTH' | 'GRAY_AREA'
+export type LegitimacyStatus = 'VERIFIED_LAW' | 'BUSTED_MYTH' | 'CRIMINAL_VIOLATION'
 
 export interface IngestedCard {
   /** Ultra-condensed 10-15 word dramatic scenario statement. */
